@@ -11,11 +11,11 @@
     </div>
 
     <div class="checkbox-group">
-      <input id="parking-discount" type="checkbox" v-model="withDiscount" />
+      <input id="parking-discount" v-model="withDiscount" type="checkbox" />
       <label for="parking-discount">Применить скидку 5%</label>
     </div>
 
-    <button class="btn-calc" @click="calculate" :disabled="loading">
+    <button class="btn-calc" :disabled="loading" @click="calculate">
       {{ loading ? 'Расчёт...' : 'Рассчитать стоимость' }}
     </button>
 
@@ -30,7 +30,7 @@
           <span class="label">Базовая цена</span>
           <span class="value">{{ formatPrice(result.base_price) }} ₽</span>
         </div>
-        <div class="result-row" v-if="result.discount > 0">
+        <div v-if="result.discount > 0" class="result-row">
           <span class="label">Скидка</span>
           <span class="value negative">-{{ (result.discount * 100).toFixed(0) }}%</span>
         </div>
@@ -43,34 +43,26 @@
   </div>
 </template>
 
-<script>
-import { ref } from 'vue'
+<script setup lang="ts">
+const props = defineProps<{ options: any }>()
 
-export default {
-  props: { options: Object },
-  setup() {
-    const parkingType = ref('Стандартное место')
-    const withDiscount = ref(false)
-    const result = ref(null)
-    const loading = ref(false)
+const { formatPrice } = useFormatters()
 
-    function formatPrice(n) {
-      return Math.round(n).toLocaleString('ru-RU')
-    }
+const parkingType = ref('Стандартное место')
+const withDiscount = ref(false)
+const result = ref<any>(null)
+const loading = ref(false)
 
-    async function calculate() {
-      loading.value = true
-      result.value = null
-      const res = await fetch('/api/calculate/parking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parking_type: parkingType.value, with_discount: withDiscount.value }),
-      })
-      result.value = await res.json()
-      loading.value = false
-    }
-
-    return { parkingType, withDiscount, result, loading, formatPrice, calculate }
-  },
+async function calculate() {
+  loading.value = true
+  result.value = null
+  try {
+    result.value = await $fetch('/api/calculate/parking', {
+      method: 'POST',
+      body: { parking_type: parkingType.value, with_discount: withDiscount.value },
+    })
+  } finally {
+    loading.value = false
+  }
 }
 </script>

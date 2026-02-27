@@ -92,7 +92,7 @@
       </div>
     </div>
 
-    <button class="btn-calc" @click="calculate" :disabled="loading">
+    <button class="btn-calc" :disabled="loading" @click="calculate">
       {{ loading ? 'Расчёт...' : 'Рассчитать стоимость' }}
     </button>
 
@@ -129,7 +129,7 @@
         </div>
       </div>
 
-      <div class="section-divider"></div>
+      <div class="section-divider" />
 
       <div class="result-section">
         <h3>Коэффициенты</h3>
@@ -137,7 +137,7 @@
           <span class="label">Базовая цена ({{ form.apartment_type }})</span>
           <span class="value">{{ formatPrice(result.coefficients.base_price) }} ₽/кв.м</span>
         </div>
-        <div class="result-row" v-for="(coeff, idx) in coeffRows" :key="idx">
+        <div v-for="(coeff, idx) in coeffRows" :key="idx" class="result-row">
           <span class="label">{{ coeff.label }}</span>
           <span class="value" :class="coeffClass(coeff.value)">
             {{ formatPercent(coeff.value) }}
@@ -151,7 +151,7 @@
         </div>
       </div>
 
-      <div class="section-divider"></div>
+      <div class="section-divider" />
 
       <div class="result-section">
         <h3>Ценообразование</h3>
@@ -163,7 +163,7 @@
           <span class="label">Бюджет</span>
           <span class="value">{{ formatPrice(result.pricing.budget) }} ₽</span>
         </div>
-        <div class="result-row" v-if="result.pricing.adjustment !== 0">
+        <div v-if="result.pricing.adjustment !== 0" class="result-row">
           <span class="label">Повышение/скидка</span>
           <span class="value" :class="coeffClass(result.pricing.adjustment)">
             {{ formatPercent(result.pricing.adjustment) }}
@@ -179,7 +179,7 @@
         </div>
       </div>
 
-      <div class="section-divider"></div>
+      <div class="section-divider" />
 
       <div class="result-section">
         <h3>Цены для CRM и сайта</h3>
@@ -206,114 +206,76 @@
   </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+const props = defineProps<{ options: any }>()
 
-export default {
-  props: { options: Object },
-  setup(props) {
-    const typeLabels = { 'Ст': 'Студия', '1К': '1-комнатная', '2К': '2-комнатная' }
+const { formatPrice, formatPercent, coeffClass } = useFormatters()
 
-    const form = ref({
-      apartment_type: 'Ст',
-      building: 'С1',
-      floor: 4,
-      area_total: 32.93,
-      area_summer: 8.19,
-      size: 'S',
-      layout: 'Линейная',
-      geometry: 'Правильная',
-      elevator_zone: 'Зона 1',
-      view: 'Двор север',
-      position: 'Стандарт',
-      units_on_floor: 13,
-      price_adjustment_pct: 0,
+const typeLabels: Record<string, string> = {
+  'Ст': 'Студия',
+  '1К': '1-комнатная',
+  '2К': '2-комнатная',
+}
+
+const form = ref({
+  apartment_type: 'Ст',
+  building: 'С1',
+  floor: 4,
+  area_total: 32.93,
+  area_summer: 8.19,
+  size: 'S',
+  layout: 'Линейная',
+  geometry: 'Правильная',
+  elevator_zone: 'Зона 1',
+  view: 'Двор север',
+  position: 'Стандарт',
+  units_on_floor: 13,
+  price_adjustment_pct: 0,
+})
+
+const result = ref<any>(null)
+const error = ref<string | null>(null)
+const loading = ref(false)
+
+const coeffRows = computed(() => {
+  if (!result.value) return []
+  const c = result.value.coefficients
+  return [
+    { label: 'Этаж', value: c.floor },
+    { label: 'Размер', value: c.size },
+    { label: 'Тип планировки', value: c.layout },
+    { label: 'Геометрия', value: c.geometry },
+    { label: 'Удалённость от лифта', value: c.elevator },
+    { label: 'Вид из окон', value: c.view },
+    { label: 'Расположение на этаже', value: c.position },
+    { label: 'Кол-во лотов на этаже', value: c.units_on_floor },
+    { label: 'Корпус', value: c.building },
+  ]
+})
+
+function sizeHint(s: string): string {
+  if (!props.options?.size_ranges) return ''
+  const ranges = props.options.size_ranges[form.value.apartment_type]
+  if (!ranges || !ranges[s]) return ''
+  return ` (${ranges[s]} кв.м)`
+}
+
+async function calculate() {
+  loading.value = true
+  error.value = null
+  result.value = null
+  try {
+    const body: any = { ...form.value, price_adjustment: form.value.price_adjustment_pct / 100 }
+    delete body.price_adjustment_pct
+    const data = await $fetch('/api/calculate/apartment', {
+      method: 'POST',
+      body,
     })
-
-    const result = ref(null)
-    const error = ref(null)
-    const loading = ref(false)
-
-    const coeffRows = computed(() => {
-      if (!result.value) return []
-      const c = result.value.coefficients
-      return [
-        { label: 'Этаж', value: c.floor },
-        { label: 'Размер', value: c.size },
-        { label: 'Тип планировки', value: c.layout },
-        { label: 'Геометрия', value: c.geometry },
-        { label: 'Удалённость от лифта', value: c.elevator },
-        { label: 'Вид из окон', value: c.view },
-        { label: 'Расположение на этаже', value: c.position },
-        { label: 'Кол-во лотов на этаже', value: c.units_on_floor },
-        { label: 'Корпус', value: c.building },
-      ]
-    })
-
-    function sizeHint(s) {
-      if (!props.options?.size_ranges) return ''
-      const ranges = props.options.size_ranges[form.value.apartment_type]
-      if (!ranges || !ranges[s]) return ''
-      return ` (${ranges[s]} кв.м)`
-    }
-
-    function formatPrice(n) {
-      return Math.round(n).toLocaleString('ru-RU')
-    }
-
-    function formatPercent(n) {
-      const pct = (n * 100).toFixed(1)
-      return n > 0 ? `+${pct}%` : `${pct}%`
-    }
-
-    function coeffClass(n) {
-      if (n > 0) return 'positive'
-      if (n < 0) return 'negative'
-      return ''
-    }
-
-    async function calculate() {
-      loading.value = true
-      error.value = null
-      result.value = null
-      try {
-        const body = { ...form.value, price_adjustment: form.value.price_adjustment_pct / 100 }
-        delete body.price_adjustment_pct
-        const res = await fetch('/api/calculate/apartment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        })
-        if (!res.ok) {
-          const data = await res.json()
-          throw new Error(data.detail || 'Ошибка расчёта')
-        }
-        result.value = await res.json()
-      } catch (e) {
-        error.value = e.message
-      } finally {
-        loading.value = false
-      }
-    }
-
-    return { form, result, error, loading, typeLabels, coeffRows, sizeHint, formatPrice, formatPercent, coeffClass, calculate }
-  },
+    result.value = data
+  } catch (e: any) {
+    error.value = e.data?.detail || e.message || 'Ошибка расчёта'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
-
-<style scoped>
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: #888;
-}
-
-.error {
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: #fdeaea;
-  color: #c0392b;
-  border-radius: 8px;
-  font-size: 14px;
-}
-</style>

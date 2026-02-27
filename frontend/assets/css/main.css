@@ -1,55 +1,3 @@
-<template>
-  <div class="app">
-    <header>
-      <h1>Калькулятор цен ЖК</h1>
-      <div class="tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          :class="{ active: activeTab === tab.id }"
-          @click="activeTab = tab.id"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
-    </header>
-
-    <main>
-      <ApartmentCalc v-if="activeTab === 'apartment'" :options="options" />
-      <StorageCalc v-if="activeTab === 'storage'" />
-      <ParkingCalc v-if="activeTab === 'parking'" :options="options" />
-    </main>
-  </div>
-</template>
-
-<script>
-import { ref, onMounted } from 'vue'
-import ApartmentCalc from './components/ApartmentCalc.vue'
-import StorageCalc from './components/StorageCalc.vue'
-import ParkingCalc from './components/ParkingCalc.vue'
-
-export default {
-  components: { ApartmentCalc, StorageCalc, ParkingCalc },
-  setup() {
-    const activeTab = ref('apartment')
-    const options = ref(null)
-    const tabs = [
-      { id: 'apartment', label: 'Квартиры' },
-      { id: 'storage', label: 'Кладовые' },
-      { id: 'parking', label: 'Машиноместа' },
-    ]
-
-    onMounted(async () => {
-      const res = await fetch('/api/options')
-      options.value = await res.json()
-    })
-
-    return { activeTab, options, tabs }
-  },
-}
-</script>
-
-<style>
 * {
   margin: 0;
   padding: 0;
@@ -81,13 +29,12 @@ header h1 {
 }
 
 .tabs {
-  display: flex;
+  display: inline-flex;
   gap: 4px;
   justify-content: center;
   background: #e2e6ea;
   border-radius: 10px;
   padding: 4px;
-  display: inline-flex;
 }
 
 .tabs button {
@@ -119,7 +66,6 @@ main {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-/* Shared form styles */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -193,7 +139,6 @@ main {
   cursor: not-allowed;
 }
 
-/* Results */
 .results {
   margin-top: 24px;
   border-top: 1px solid #eee;
@@ -289,4 +234,18 @@ main {
   font-size: 14px;
   color: #333;
 }
-</style>
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+
+.error {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #fdeaea;
+  color: #c0392b;
+  border-radius: 8px;
+  font-size: 14px;
+}

@@ -8,11 +8,11 @@
     </div>
 
     <div class="checkbox-group">
-      <input id="storage-discount" type="checkbox" v-model="withDiscount" />
+      <input id="storage-discount" v-model="withDiscount" type="checkbox" />
       <label for="storage-discount">Применить скидку 5%</label>
     </div>
 
-    <button class="btn-calc" @click="calculate" :disabled="loading || !area">
+    <button class="btn-calc" :disabled="loading || !area" @click="calculate">
       {{ loading ? 'Расчёт...' : 'Рассчитать стоимость' }}
     </button>
 
@@ -29,7 +29,7 @@
           <span class="label">Цена за кв.м</span>
           <span class="value">{{ formatPrice(result.price_per_sqm) }} ₽</span>
         </div>
-        <div class="result-row" v-if="result.discount > 0">
+        <div v-if="result.discount > 0" class="result-row">
           <span class="label">Скидка</span>
           <span class="value negative">-{{ (result.discount * 100).toFixed(0) }}%</span>
         </div>
@@ -42,33 +42,24 @@
   </div>
 </template>
 
-<script>
-import { ref } from 'vue'
+<script setup lang="ts">
+const { formatPrice } = useFormatters()
 
-export default {
-  setup() {
-    const area = ref(3.5)
-    const withDiscount = ref(false)
-    const result = ref(null)
-    const loading = ref(false)
+const area = ref(3.5)
+const withDiscount = ref(false)
+const result = ref<any>(null)
+const loading = ref(false)
 
-    function formatPrice(n) {
-      return Math.round(n).toLocaleString('ru-RU')
-    }
-
-    async function calculate() {
-      loading.value = true
-      result.value = null
-      const res = await fetch('/api/calculate/storage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ area: area.value, with_discount: withDiscount.value }),
-      })
-      result.value = await res.json()
-      loading.value = false
-    }
-
-    return { area, withDiscount, result, loading, formatPrice, calculate }
-  },
+async function calculate() {
+  loading.value = true
+  result.value = null
+  try {
+    result.value = await $fetch('/api/calculate/storage', {
+      method: 'POST',
+      body: { area: area.value, with_discount: withDiscount.value },
+    })
+  } finally {
+    loading.value = false
+  }
 }
 </script>

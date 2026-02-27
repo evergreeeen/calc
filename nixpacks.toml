@@ -8,7 +8,7 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["cd frontend && npm run build"]
+cmds = ["cd frontend && npx nuxt generate"]
 
 [start]
 cmd = "bash -c 'python -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}'"

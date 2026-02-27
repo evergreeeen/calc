@@ -92,10 +92,12 @@ def calc_parking(req: ParkingRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# Serve Vue frontend static files in production
-static_dir = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+# Serve Nuxt frontend static files in production
+static_dir = os.path.join(os.path.dirname(__file__), "..", "frontend", ".output", "public")
 if os.path.isdir(static_dir):
-    app.mount("/assets", StaticFiles(directory=os.path.join(static_dir, "assets")), name="assets")
+    nuxt_assets = os.path.join(static_dir, "_nuxt")
+    if os.path.isdir(nuxt_assets):
+        app.mount("/_nuxt", StaticFiles(directory=nuxt_assets), name="nuxt_assets")
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
