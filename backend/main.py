@@ -16,6 +16,10 @@ try:
         calculate_parking_price,
     )
     from backend.coefficients import get_all_options
+    from backend.profitability import (
+        calculate_profitability,
+        get_lot_options,
+    )
 except ImportError:
     from calculator import (
         calculate_apartment_price,
@@ -23,6 +27,10 @@ except ImportError:
         calculate_parking_price,
     )
     from coefficients import get_all_options
+    from profitability import (
+        calculate_profitability,
+        get_lot_options,
+    )
 
 app = FastAPI(title="Калькулятор цен ЖК", version="1.0.0")
 
@@ -60,6 +68,27 @@ class StorageRequest(BaseModel):
 class ParkingRequest(BaseModel):
     parking_type: str = Field(description="Тип парковочного места")
     with_discount: bool = Field(default=False, description="Применить скидку")
+
+
+class ProfitabilityRequest(BaseModel):
+    building: str = Field(description="Корпус: С1, С2, С3-1, С3-2")
+    number: int = Field(ge=1, description="Условный номер лота")
+    installment: bool = Field(default=False, description="Покупка в рассрочку")
+
+
+@app.get("/api/lots")
+def get_lots():
+    """Get available buildings and lot numbers for the profitability calculator."""
+    return get_lot_options()
+
+
+@app.post("/api/calculate/profitability")
+def calc_profitability(req: ProfitabilityRequest):
+    """Calculate investment profitability for a specific lot."""
+    try:
+        return calculate_profitability(**req.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/api/options")
