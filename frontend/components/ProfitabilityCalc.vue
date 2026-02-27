@@ -197,8 +197,8 @@
       <!-- Summary -->
       <div class="result-section">
         <h3>Итоги за 10 лет</h3>
-        <div class="result-highlight" style="background: #eafbef">
-          <div class="price-main" style="color: #2ecc71">{{ fp(result.summary.total_return_10y) }} ₽</div>
+        <div class="result-highlight summary-highlight">
+          <div class="price-main summary-price">{{ fp(result.summary.total_return_10y) }} ₽</div>
           <div class="price-sub">Совокупный доход (аренда + рост цены)</div>
         </div>
         <div class="result-row">
@@ -294,15 +294,15 @@ async function calculate() {
 <style scoped>
 .chart-container {
   overflow-x: auto;
-  padding: 8px 0;
+  padding: 12px 0;
 }
 
 .bar-chart {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: flex-end;
   min-width: 500px;
-  padding-top: 20px;
+  padding-top: 24px;
 }
 
 .bar-item {
@@ -315,37 +315,42 @@ async function calculate() {
 
 .bar-value {
   font-size: 10px;
-  color: #888;
-  margin-bottom: 4px;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .bar {
   width: 100%;
-  max-width: 50px;
-  background: #4a6cf7;
-  border-radius: 4px 4px 0 0;
-  transition: height 0.3s;
+  max-width: 48px;
+  background: var(--color-teal);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.4s ease;
+  opacity: 0.75;
 }
 
 .bar.highlight {
-  background: #e74c3c;
+  background: var(--color-teal-dark);
+  opacity: 1;
 }
 
 .bar.bar-green {
-  background: #2ecc71;
+  background: var(--color-teal);
+  opacity: 0.75;
 }
 
 .bar-label {
   font-size: 10px;
-  color: #888;
-  margin-top: 4px;
+  color: var(--color-text-muted);
+  margin-top: 6px;
   transform: rotate(-45deg);
   white-space: nowrap;
 }
 
 .table-scroll {
   overflow-x: auto;
+  margin: 0 -4px;
 }
 
 .data-table {
@@ -356,18 +361,22 @@ async function calculate() {
 
 .data-table th,
 .data-table td {
-  padding: 8px 10px;
+  padding: 10px 12px;
   text-align: right;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-light);
   white-space: nowrap;
 }
 
 .data-table th {
-  font-size: 11px;
-  font-weight: 600;
-  color: #888;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 1px;
+}
+
+.data-table td {
+  color: var(--color-text);
 }
 
 .data-table td:first-child,
@@ -375,8 +384,21 @@ async function calculate() {
   text-align: left;
 }
 
+.data-table tbody tr:hover {
+  background: var(--color-teal-light);
+}
+
 .data-table .positive {
-  color: #2ecc71;
+  color: var(--color-teal);
   font-weight: 600;
+}
+
+.summary-highlight {
+  background: var(--color-positive-bg);
+  border-color: rgba(61, 139, 139, 0.15);
+}
+
+.summary-price {
+  color: var(--color-teal) !important;
 }
 </style>
