@@ -1,10 +1,10 @@
-# Stage 1: Build Vue frontend
+# Stage 1: Build Nuxt frontend
 FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm install
 COPY frontend/ ./
-RUN npm run build
+RUN npx nuxt generate
 
 # Stage 2: Python backend + static files
 FROM python:3.11-slim
@@ -14,7 +14,7 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./backend/
-COPY --from=frontend-build /app/frontend/dist ./frontend/dist
+COPY --from=frontend-build /app/frontend/.output/public ./frontend/.output/public
 
 EXPOSE 8000
 
